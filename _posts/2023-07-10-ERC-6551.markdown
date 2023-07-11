@@ -1,7 +1,7 @@
 ---
 layout: post
-title:  "ERC-6551 提案"
-date:   2023-06-26 16:30:00 +0800
+title:  "ERC-6551 提案全文翻译"
+date:   2023-07-10 16:30:00 +0800
 categories: eip
 permalink: /eip/6551
 tags: eip erc 6551
