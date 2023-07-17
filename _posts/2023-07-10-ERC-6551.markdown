@@ -7,8 +7,6 @@ permalink: /eip/6551
 tags: eip erc 6551
 ---
 
-英文原版见：[https://eips.ethereum.org/EIPS/eip-6551](https://eips.ethereum.org/EIPS/eip-6551)
-
 | eip   | 标题   | 描述   | 作者 | 讨论链接 | 状态 | type | 分类 | 创建时间 | 依赖 |
 |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|
 | 6551   | 非同质化代币绑定账户   | ERC-721代币所拥有的智能合约账户的接口和注册表   | Jayden Windle (@jaydenwindle)<br> Benny Giang <bg@futureprimitive.xyz> <br> Steve Jang, Druzy Downs (@druzydowns)<br>Raymond Huynh (@huynhr), Alanah Lam <alanah@futureprimitive.xyz><br>Wilkins Chung (@wwhchung) <wilkins@manifold.xyz><br>Paul Sullivan (@sullivph) <paul.sullivan@manifold.xyz> | [https://ethereum-magicians.org/t/non-fungible-token-bound-accounts/13030](https://ethereum-magicians.org/t/non-fungible-token-bound-accounts/13030) | 草稿 | Standards Track | ERC | 2023-02-23 | [155](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md), [165](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-165.md), [721](https://github.com/ethereum/EIPs/blob/bb55940264223f7063e660687475185aaed8a215/EIPS/eip-721.md), [1167](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1167.md), [1271](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1271.md) |
@@ -435,3 +433,7 @@ contract ERC6551Registry is IERC6551Registry {
 ## 版权
 
 版权和相关权利通过[CC0](https://github.com/ethereum/EIPs/blob/bb55940264223f7063e660687475185aaed8a215/LICENSE.md)放弃。
+
+---
+
+英文原版见：[https://eips.ethereum.org/EIPS/eip-6551](https://eips.ethereum.org/EIPS/eip-6551)
