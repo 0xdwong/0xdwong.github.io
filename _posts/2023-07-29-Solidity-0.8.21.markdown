@@ -1,6 +1,6 @@
 ---
 layout: post
-title: '【译】Solidity 0.8.21 Release Announcement'
+title: '【译】Solidity 0.8.21 发布公告'
 date: '2023-07-29'
 categories: solidity
 permalink: /solidity/0.8.21
