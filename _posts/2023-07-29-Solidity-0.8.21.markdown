@@ -106,3 +106,9 @@ contract C
 您可以在此处下载 Solidity 的新版本：[v0.8.21](https://github.com/ethereum/solidity/releases/tag/v0.8.21)。如果您想从源代码构建，请不要使用 GitHub 自动生成的源代码存档，而是请使用 [`solidity_0.8.21.tar.gz`](https://github.com/ethereum/solidity/releases/download/v0.8.21/solidity_0.8.21.tar.gz)，并参考我们的[文档](https://docs.soliditylang.org/en/v0.8.21/installing-solidity.html#building-from-source)以获取构建指南。
 
 请注意，对于使用 Solidity 版本低于 0.8.0， [there are breaking changes](https://docs.soliditylang.org/en/v0.8.21/080-breaking-changes.html) 的用户来说，有一些重大变更。我们强烈建议您查阅我们的文档中详细列出的重大变更列表，以确保平稳升级过程。此外，我们鼓励所有 Solidity 用户定期检查更新，以保持与最新的改进和优化保持同步。我们建议所有 Solidity 开发者升级到 0.8.21 版本，以享受这些改进和优化带来的好处。
+
+
+---
+  
+
+> 原文链接：[https://soliditylang.org/blog/2023/07/19/solidity-0.8.21-release-announcement/](https://soliditylang.org/blog/2023/07/19/solidity-0.8.21-release-announcement/)
