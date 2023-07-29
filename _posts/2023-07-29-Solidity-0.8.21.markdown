@@ -1,0 +1,108 @@
+---
+layout: post
+title: '【译】Solidity 0.8.21 Release Announcement'
+date: '2023-07-29'
+categories: solidity
+permalink: /solidity/0.8.21
+tags: solidity
+---
+
+
+我们很高兴地宣布最新版本的 Solidity 编译器，[Solidity v0.8.21](https://github.com/ethereum/solidity/releases/tag/v0.8.21).
+
+## 显著的新功能
+
+### 通过 IR 始终启用堆栈到内存的移动器
+
+该版本解决了基于 IR 的代码生成流程产生未优化代码时过于容易出现“Stack Too Deep”错误的问题。这旨在帮助像调试器这样的工具，在处理优化代码时不再失去大部分效益。
+
+传统的流水线即使在未经优化的模式下，通常也能避免耗尽可达的堆栈空间，但这是以更高的复杂性为代价的，因为许多优化都是作为代码生成的一部分硬编码的。新的流水线从一开始设计的目标就是将这两个问题分开。它产生的输出简单直接，但非常低效，旨在通过Yul优化器的离散步骤进行改进。每个步骤执行的转换可以在隔离的环境中进行验证和推理。这种方法的缺点是未经优化的代码往往有很多未使用的局部变量，并且会遇到堆栈问题。
+
+我们的解决方案是通过最小的转换来处理未经优化的代码，以解决堆栈问题，但不会对其进行重大改变，就像完全优化那样。具体来说，编译器现在会对这样的代码运行 [`UnusedPruner`](https://docs.soliditylang.org/en/v0.8.21/internals/optimizer.html#unused-pruner) 优化步骤，以删除未使用的变量。此外，堆栈到内存移动机制现在始终处于启用状态，解决了剩余的堆栈问题，但会增加额外的内存访问开销。
+
+这两件事情在现有的优化器设置中已经是可以实现的，但并不是默认行为的一部分。尽管在技术上涉及到优化器模块，但我们认为它们是新流程的重要组成部分，也是未经优化的代码的新基准
+
+## 重要的错误修复
+
+- 代码生成器：始终在传统代码生成流程中为 ``<expression>.selector`` 中的表达式生成代码。您可以在我们的[博客文章](https://soliditylang.org/blog/2023/07/19/missing-side-effects-on-selector-access-bug)中了解更多信息。
+- Yul 优化器：修复 ``FullInliner`` 步骤（``i``）在非表达式分割形式的代码中不保留传递给内联函数的参数的评估顺序（即在使用自定义优化器序列时，该步骤不在 ``ExpressionSplitter(x)``之前）。您可以在我们的[博客文章](https://soliditylang.org/blog/2023/07/19/full-inliner-non-expression-split-argument-evaluation-order-bug)中阅读更多相关信息。
+
+## 语言特点
+
+- 允许其他合约有资格访问事件。
+- 放宽对不可变变量初始化的限制。在函数和修饰器之外的构造时刻，现在可以随时进行读写操作。不再强制要求显式初始化。
+
+### 放宽对不可变变量初始化的限制
+
+鉴于过去几个月发现了一些错误，我们在不可变初始化检查方面的工作不够完善，从而导致了一些边缘情况，使得这些不可变对象可能保持未初始化状态（例如 ``try/catch`` 块的分支、 ``for`` 循环等），我们决定大幅放宽对不可变对象初始化的限制。
+
+尽管不可变对象仍然只能在构造时显式初始化，但现在这种初始化是可选的，因为所有不可变对象都将被默认（零）初始化。我们还决定取消一次赋值限制，这意味着您现在可以对不可变对象进行多次赋值，最后一次赋值将被保留。
+
+```solidity
+contract C
+{
+    uint256 public immutable foo = 1;
+    
+    constructor()
+    {
+        foo = 2;
+        foo = 3;
+    }
+}
+```
+
+然而，需要注意的是，我们放宽了这些限制，因为这些检查最终是为了保持合约创建的一致性而人为地强加了合约不可变性的限制，而不是出于安全原因。  
+虽然仍然存在一些限制，比如在函数和修饰器中无法初始化不可变变量，但我们希望最终也能放开这些限制。
+
+## 影响 IR 流水线中未优化字节码可重现性的错误
+
+该版本修复了基于 IR 的代码生成器中的一个小错误，该错误导致根据编译器二进制文件的构建方式产生不同（但在功能上等效）的字节码。特别是，使用 Clang C++ 编译器构建的二进制文件在某些情况下会以不同于使用 GCC 构建的二进制文件的方式对 Yul 函数进行排序。触发该错误的情况是对内存数组进行索引。这将导致生成多个 Yul 辅助函数，其顺序取决于所使用的 C++ 编译器。
+
+该错误仅影响由 IR 流水线生成的未优化代码，即需要在标准JSON中使用 `settings.viaIR` 或在 CLI 上使用 `--via-ir` 标志。使用 Yul 优化器可以抵消其影响，因为它会重新排序函数。
+
+该错误影响了 [solc-bin](https://github.com/ethereum/solc-bin/) 中提供的官方二进制文件。emscripten 和 macOS 二进制文件使用 Clang 构建，Linux 二进制文件使用 GCC 构建，Windows 二进制文件使用 MSVC 构建。建议对合约进行源代码验证的工具考虑到合约可能由这些二进制文件之一生成。
+
+## 完整更新日志
+
+### 编译器功能
+
+- 命令行界面：在汇编器模式下添加 ``--ast-compact-json`` 输出选项。
+- 命令行界面：为Solidity输入添加 ``--ir-ast-json`` 和 ``--ir-optimized-ast-json`` 输出，以提供 IR 和优化 IR 的紧凑JSON格式的 AST。
+- 命令行界面：在编译器模式下尊重 ``--optimize-yul`` 和 ``--no-optimize-yul``，并在汇编器模式下接受它们。现在，``--optimize --no-optimize-yul`` 的组合允许启用 EVM 汇编优化器而不启用 Yul 优化器。
+- EWasm：移除 EWasm 后端。
+- 解析器：引入 ``pragma experimental solidity``，这将启用一个实验性的语言模式，特别是在非破坏性发布之间没有稳定性保证，并且不适用于生产环境使用。
+- SMTChecker：添加 ``--model-checker-print-query`` 命令行选项和 ``settings.modelChecker.printQuery`` JSON 选项，以 SMTLIB2 格式输出 SMTChecker 查询。这需要仅使用 ``smtlib2`` 求解器。
+- 标准的 JSON 接口：为 Yul 输入添加 ``ast`` 文件级输出。
+- 标准的 JSON 接口：为Solidity输入添加 ``irAst`` 和 ``irOptimizedAst`` 合约级输出，为 IR 和优化后的 IR 提供紧凑的JSON格式的AST。
+- Yul 优化器：移除实验性的 ``ReasoningBasedSimplifier`` 优化步骤。
+- Yul优化器：在通过 IR 代码生成和纯 Yul 编译时，现在默认启用堆栈到内存的移动。
+
+### 错误修复
+
+- 代码生成器：禁止复杂表达式的结果为类型、内置函数、模块或某些不可赋值的函数。传统的代码生成流程实际上不会对它们进行评估，丢弃可能产生的任何副作用。
+- 代码生成器：修复未完全确定性的函数顺序在未优化的 Yul 输出中。在某些情况下，选择 C++ 编译器会导致不同（但等效）的字节码（特别是来自本机二进制文件与 emscripten 二进制文件）。
+- 命令行界面：修复在使用 ``--stop-after`` 解析并请求一些需要完整分析或编译的输出时出现的内部错误。
+- 命令行界面：不再允许同时指定 ``--optimize-yul`` 和 ``--no-optimize-yul``。
+- SMTChecker：在BMC引擎中修复 ``if`` 和 ``三元条件`` 语句中副作用的编码。
+- SMTChecker：修复当验证目标只能通过来自另一个公共函数的可信外部调用违反时的误报问题。
+- SMTChecker：修复在CHC引擎超时时，BMC引擎以可信模式进行外部调用时生成无效的 SMT-LIB2 脚本。
+- SMTChecker：修复由于错误地将使用函数指针的外部函数调用分类为公共获取器而导致的内部错误。
+- SMTChecker：修复由于使用外部标识符对接受内部函数作为参数的函数的成员访问进行编码而导致的内部错误。
+- 标准的 JSON 接口：修复在分析过程中由于某些致命错误而导致返回不完整的AST。
+- 类型检查器：禁止在复杂表达式中使用某些不可赋值的函数类型。
+- 类型检查器：引用不同声明的函数声明类型不再可互相转换。
+- Yul 优化器：确保将移至内存的变量的内存槽分配不依赖于可能取决于编译过程中是否包含其他文件的 AST ID。
+- Yul 优化器：修复 ``FullInliner`` 步骤未忽略非表达式分割形式的代码。
+- Yul 优化器：修复在生成字节码之前，优化的中间表示（IR）被不必要地再次通过 Yul 优化器传递的问题。
+  
+### AST变更
+
+- AST: 在 ``SourceUnit`` 节点中添加 ``experimentalSolidity`` 字段，该字段指示是否通过 ``pragma experimental solidity`` 启用了实验性解析模式。
+
+## 如何安装/升级
+
+要升级到最新版本的 Solidity 编译器，只需按照我们文档中提供的[安装说明](https://docs.soliditylang.org/en/v0.8.21/installing-solidity.html)进行操作。我们的团队已经确保提供了详细而简单的步骤，以使升级过程尽可能顺利。如果在升级过程中遇到任何问题或困难，请随时联系我们的社区 [Matrix 频道](https://matrix.to/#/#ethereum_solidity:gitter.im)。
+
+您可以在此处下载 Solidity 的新版本：[v0.8.21](https://github.com/ethereum/solidity/releases/tag/v0.8.21)。如果您想从源代码构建，请不要使用 GitHub 自动生成的源代码存档，而是请使用 [`solidity_0.8.21.tar.gz`](https://github.com/ethereum/solidity/releases/download/v0.8.21/solidity_0.8.21.tar.gz)，并参考我们的[文档](https://docs.soliditylang.org/en/v0.8.21/installing-solidity.html#building-from-source)以获取构建指南。
+
+请注意，对于使用 Solidity 版本低于 0.8.0， [there are breaking changes](https://docs.soliditylang.org/en/v0.8.21/080-breaking-changes.html) 的用户来说，有一些重大变更。我们强烈建议您查阅我们的文档中详细列出的重大变更列表，以确保平稳升级过程。此外，我们鼓励所有 Solidity 用户定期检查更新，以保持与最新的改进和优化保持同步。我们建议所有 Solidity 开发者升级到 0.8.21 版本，以享受这些改进和优化带来的好处。
