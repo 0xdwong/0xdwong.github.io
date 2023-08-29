@@ -9,7 +9,7 @@ tags: abi whatsabi
 
 
 # WhatsABI 简介
-从 EVM 字节码中猜测出 ABI（和其他元数据），即使没有原源代码。[Github](https://github.com/shazow/whatsabi)
+从 EVM 字节码中猜测出 ABI（和其他元数据），即使没有源代码。[Github](https://github.com/shazow/whatsabi)
 
 ## 特点
 WhatsABI 在一些重要方面与其他 EVM 分析工具不同：
