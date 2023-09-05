@@ -4,7 +4,7 @@ title: 'WhatsABI 简介'
 date: '2023-08-28'
 category: tool
 permalink: /tool/guide-to-whatsabi
-tags: abi whatsabi
+tags: solidity abi whatsabi
 ---
 
 
