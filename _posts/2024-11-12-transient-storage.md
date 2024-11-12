@@ -45,6 +45,7 @@ tags: eips transient storage
 1. 使用 `tstore` 和 `tload` 汇编指令：
 
 ```solidity
+pragma solidity ^0.8.24;
 contract TransientStorageExample {
     function example() public {
         assembly {
