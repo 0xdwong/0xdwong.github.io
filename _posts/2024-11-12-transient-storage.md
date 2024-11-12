@@ -44,93 +44,93 @@ tags: eips transient storage
 
 1. 使用 `tstore` 和 `tload` 汇编指令：
 
-```solidity
-pragma solidity ^0.8.24;
-contract TransientStorageExample {
-    function example() public {
-        assembly {
-            // 存储值
-            tstore(0x01, 100)
-            
-            // 其它操作
+    ```solidity
+    pragma solidity ^0.8.24;
+    contract TransientStorageExample {
+        function example() public {
+            assembly {
+                // 存储值
+                tstore(0x01, 100)
+                
+                // 其它操作
 
-            // 读取值
-            let value := tload(0x01)
+                // 读取值
+                let value := tload(0x01)
+            }
         }
     }
-}
-```
+    ```
 
 2. 使用 `transient` 关键字（在 Solidity 0.8.28 及之后的版本中）：
 
-```solidity
-pragma solidity ^0.8.28;
+    ```solidity
+    pragma solidity ^0.8.28;
 
-contract TransientStorageExample {
-    uint transient tempValue;
+    contract TransientStorageExample {
+        uint transient tempValue;
 
-    function example() public {
-        tempValue = 100;
+        function example() public {
+            tempValue = 100;
 
-        // 其它操作
+            // 其它操作
 
-        return tempValue;
+            return tempValue;
+        }
     }
-}
-```
+    ```
 
 3. 一个使用瞬态存储实现的重入锁：
 
-```solidity
-pragma solidity ^0.8.28;
+    ```solidity
+    pragma solidity ^0.8.28;
 
-contract TReentrant {
-    mapping(address => bool) claimed;
-    bool transient locked;
+    contract TReentrant {
+        mapping(address => bool) claimed;
+        bool transient locked;
 
-    modifier nonReentrant {
-        require(!locked, "Reentrancy attempt");
+        modifier nonReentrant {
+            require(!locked, "Reentrancy attempt");
 
-        locked = true;
+            locked = true;
 
-        _;
+            _;
 
-        locked = false;
+            locked = false;
+        }
+
+        function claim() nonReentrant public {
+            require(!claimed[msg.sender], "Already claimed");
+
+            // 其它操作
+
+            claimed[msg.sender] = true;
+        }
     }
-
-    function claim() nonReentrant public {
-        require(!claimed[msg.sender], "Already claimed");
-
-        // 其它操作
-
-        claimed[msg.sender] = true;
-    }
-}
-```
+    ```
 
 4. 错误使用瞬态存储的例子：
 
-```solidity
-pragma solidity ^0.8.28;
+    ```solidity
+    pragma solidity ^0.8.28;
 
-contract TMultiplier {
-    uint public transient multiplier;
+    contract TMultiplier {
+        uint public transient multiplier;
 
-    function setMultiplier(uint mul) external {
-        multiplier = mul;
+        function setMultiplier(uint mul) external {
+            multiplier = mul;
+        }
+
+        function multiply(uint value) external view returns (uint) {
+            return value * multiplier;
+        }
     }
+    ```
 
-    function multiply(uint value) external view returns (uint) {
-        return value * multiplier;
-    }
-}
-```
-
-```
-setMultiplier(100);
-multiply(1); // 返回 0，而不是 100
-multiply(2); // 返回 0，而不是 200
-```
+    ```
+    setMultiplier(100);
+    multiply(1); // 返回 0，而不是 100
+    multiply(2); // 返回 0，而不是 200
+    ```
 
 如果该示例使用内存或存储来存储乘数，它将是完全可组合的。无论是将交易拆分为单独的交易还是以某种方式将它们组合在一起，都没有关系。总是会得到相同的结果：在 `multiplier` 设置为 `100` 后，后续调用将分别返回 `100` 和 `200`。这使得可以将来自多个交易的调用批量处理在一起以减少 gas 费用。
 
