@@ -1,4 +1,11 @@
-# 解读以太坊下一个重大升级：Pectra
+---
+layout: post
+title: '解读以太坊下一个重大升级：Pectra'
+date: '2025-02-17'
+category: eips
+permalink: /eips/intro-to-pectra
+tags: ethereum eips pectra
+---
 
 Pectra 升级是以太坊网络的下一个重要里程碑，预计将于 2025 年 4 月在以太坊主网上线。这次升级包含两个主要部分：Prague（布拉格）执行层升级和 Electra（星座名）协议层升级。
 
